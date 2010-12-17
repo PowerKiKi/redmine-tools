@@ -1,5 +1,26 @@
 <?php 
 
+/**
+  * This script migrate redmine project from one instance of redmine to another one. It will 
+  * import the following objects:
+  *   - project
+  *   - categories
+  *   - versions
+  *   - issues
+  *   - journals
+  *   - logged time
+  *   - modules status (wether it is active for the project)
+  * 
+  * It relies on manual mapping for users and priorities as they should already exist in target database.
+  * All modifications of the target database are live. So it is strongly advised to test against a dummy database first.
+  * 
+  * USAGE: 
+  *   1. update manual mapping for users and priorities (see $usersMapping and $prioritiesMapping)
+  *   2. update database connection data and project ID to migrate
+  *   3. run the script
+  */
+
+
 require_once(dirname(__FILE__) . '/Library/DBMysql.php');
 
 class Migrator
@@ -39,7 +60,7 @@ class Migrator
 		$this->dbNew->connect($db2);
 	}
 	
-	function replaceUser($idUserOld)
+	private function replaceUser($idUserOld)
 	{
 		if ($idUserOld == null)
 			return null;
@@ -50,7 +71,7 @@ class Migrator
 			return $this->usersMapping[$idUserOld];
 	}
 	
-	function replacePriority($idPriorityOld)
+	private function replacePriority($idPriorityOld)
 	{
 		if ($idPriorityOld == null)
 			return null;
@@ -61,7 +82,7 @@ class Migrator
 			return $this->prioritiesMapping[$idPriorityOld];
 	}
 	
-	function migrateCategories($idProjectOld)
+	private function migrateCategories($idProjectOld)
 	{
 		$result = $this->dbOld->select('issue_categories', array('project_id' => $idProjectOld));
 		$categoriesOld = $this->dbOld->getAssocArrays($result);
@@ -77,7 +98,7 @@ class Migrator
 		}
 	}
 	
-	function migrateVersions($idProjectOld)
+	private function migrateVersions($idProjectOld)
 	{
 		$result = $this->dbOld->select('versions', array('project_id' => $idProjectOld));
 		$versionsOld = $this->dbOld->getAssocArrays($result);
@@ -94,7 +115,7 @@ class Migrator
 		}
 	}
 
-	function migrateJournals($idIssueOld)
+	private function migrateJournals($idIssueOld)
 	{
 		$result = $this->dbOld->select('journals', array('journalized_id' => $idIssueOld));
 		$journalsOld = $this->dbOld->getAssocArrays($result);
@@ -114,7 +135,7 @@ class Migrator
 		}
 	}
 
-	function migrateTimeEntries($idProjectOld)
+	private function migrateTimeEntries($idProjectOld)
 	{
 		$result = $this->dbOld->select('time_entries', array('project_id' => $idProjectOld));
 		$timeEntriesOld = $this->dbOld->getAssocArrays($result);
@@ -133,7 +154,7 @@ class Migrator
 		}
 	}
 	
-	function migratemodules($idProjectOld)
+	private function migratemodules($idProjectOld)
 	{
 		$result = $this->dbOld->select('enabled_modules', array('project_id' => $idProjectOld));
 		$modulesOld = $this->dbOld->getAssocArrays($result);
@@ -150,7 +171,7 @@ class Migrator
 		}
 	}
 	
-	function migrateJournalsDetails($idJournalOld)
+	private function migrateJournalsDetails($idJournalOld)
 	{
 		$result = $this->dbOld->select('journal_details', array('journal_id' => $idJournalOld));
 		$journalDetailsOld = $this->dbOld->getAssocArrays($result);
@@ -165,7 +186,7 @@ class Migrator
 		}
 	}
 	
-	function migrateIssues($idProjectOld)
+	private function migrateIssues($idProjectOld)
 	{
 		$result = $this->dbOld->select('issues', array('project_id' => $idProjectOld));
 		$issuesOld = $this->dbOld->getAssocArrays($result);
@@ -218,8 +239,7 @@ class Migrator
 		echo 'versions: ' . count($this->versionsMapping) . " <br>\n";
 		echo 'journals: ' . count($this->journalsMapping) . " <br>\n";
 		echo 'time entries: ' . count($this->timeEntriesMapping) . " <br>\n";
-		echo 'modules enabled: ' . count($this->modulesMapping) . " <br>\n";
-		
+		echo 'modules enabled: ' . count($this->modulesMapping) . " <br>\n";		
 	}
 }
 

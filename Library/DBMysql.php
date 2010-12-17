@@ -85,26 +85,24 @@ class DBMysql {
 	}
 
 	function __destruct() {
-		self :: disconnect();
+		self::disconnect();
 	}
 
 
 // est ce qu'avoir une connexion persistante avec mysqli_pconnect permettrai de gagner en performance ??
 	function connect($bdName = "") {
-		$this->bdLink = @ mysqli_connect($this->hostname, $this->username, $this->pwd);
-	#	$this->bdLink = @ mysqli_connect($this->hostname, $this->username, $this->pwd, '', 3306, '/Applications/MAMP/tmp/mysql/mysql.sock');
-		
-		self :: GestionErreur(!$this->bdLink, 'Connect - '.self :: cstErrConnect.' '.$this->hostname);
+		$this->bdLink = @ mysqli_connect($this->hostname, $this->username, $this->pwd);		
+		self::GestionErreur(!$this->bdLink, 'Connect - '.self::cstErrConnect.' '.$this->hostname);
 		if ($bdName != "") {
-			self :: SelectBd($bdName);
+			self::SelectBd($bdName);
 		}
 		//request with UTF-8 character set according to http://se.php.net/manual/en/function.mysqli-query.php
 		$this->bdLink->query("SET NAMES 'utf8'");
 	}
 
-	function disconnect($mode = self :: cstModeError) {
-		if ($mode == self :: cstModeError) {
-			self :: GestionErreur(!isset ($this->bdLink), "Disconnect - ".self :: cstErrConnInactive);
+	function disconnect($mode = self::cstModeError) {
+		if ($mode == self::cstModeError) {
+			self::GestionErreur(!isset ($this->bdLink), "Disconnect - ".self::cstErrConnInactive);
 		}
 		@ mysqli_close($this->bdLink);
 		unset ($this->bdLink);
@@ -112,29 +110,29 @@ class DBMysql {
 
 	// start manual transaction (make sure mysqli autocommit is turned off)
 	function startTransaction() {
-		self :: GestionErreur(!isset ($this->bdLink), "Start transaction - ".self :: cstErrConnInactive);
+		self::GestionErreur(!isset ($this->bdLink), "Start transaction - ".self::cstErrConnInactive);
 		mysqli_autocommit($this->bdLink,false);
 	}
 
 	function commit() {
-		self :: GestionErreur(!isset ($this->bdLink), "Commit transaction - ".self :: cstErrConnInactive);
+		self::GestionErreur(!isset ($this->bdLink), "Commit transaction - ".self::cstErrConnInactive);
 		mysqli_commit($this->bdLink);
 	}
 
 	function rollback() {
-		self :: GestionErreur(!isset ($this->bdLink), "Rollback transaction - ".self :: cstErrConnInactive);
+		self::GestionErreur(!isset ($this->bdLink), "Rollback transaction - ".self::cstErrConnInactive);
 		mysqli_rollback($this->bdLink);
 	}
 
 	function selectBd($bdName) {
-		self :: GestionErreur(!isset ($this->bdLink), "SelectBd - ".self :: cstErrConnInactive);
+		self::GestionErreur(!isset ($this->bdLink), "SelectBd - ".self::cstErrConnInactive);
 		$this->bdName = $bdName;
-		self :: GestionErreur(!@ mysqli_select_db($this->bdLink, $bdName), "SelectBd - ".self :: cstErrSelectBD.' '.$this->bdName);
+		self::GestionErreur(!@ mysqli_select_db($this->bdLink, $bdName), "SelectBd - ".self::cstErrSelectBD.' '.$this->bdName);
 	}
 
 	function query($query){
-		self :: GestionErreur(!isset ($this->bdLink), "Query - ".self :: cstErrConnInactive);
-		self :: GestionErreur(!@ mysqli_real_query($this->bdLink, $query), "Query - ".self :: cstErrQuery.' <pre>'.$query . '</pre>');
+		self::GestionErreur(!isset ($this->bdLink), "Query - ".self::cstErrConnInactive);
+		self::GestionErreur(!@ mysqli_real_query($this->bdLink, $query), "Query - ".self::cstErrQuery.' <pre>'.$query . '</pre>');
 
 		//si c'est une requête qui n'est pas cense ramener qqchose on stop
 		if (@ mysqli_field_count($this->bdLink) == 0) {
@@ -149,8 +147,8 @@ class DBMysql {
 	}
 
 	function tblExist($tblName) {
-		self :: GestionErreur(!isset ($this->bdLink), "TblExist - ".self :: cstErrConnInactive);
-		return self :: Query("SHOW TABLES FROM ".$this->bdName." LIKE '".$tblName."'");
+		self::GestionErreur(!isset ($this->bdLink), "TblExist - ".self::cstErrConnInactive);
+		return self::Query("SHOW TABLES FROM ".$this->bdName." LIKE '".$tblName."'");
 	}
 
 	function escapeStr($str) {
