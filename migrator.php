@@ -106,8 +106,6 @@ class Migrator
 		{
 			$idVersionOld = $versionOld['id'];
 			unset($versionOld['id']);
-			unset($versionOld['status']);
-			unset($versionOld['sharing']);
 			$versionOld['project_id'] = $this->projectsMapping[$idProjectOld];
 			
 			$idVersionNew = $this->dbNew->insert('versions', $versionOld);
@@ -194,10 +192,6 @@ class Migrator
 		{
 			$idIssueOld = $issueOld['id'];
 			unset($issueOld['id']);
-			unset($issueOld['parent_id']);
-			unset($issueOld['root_id']);
-			unset($issueOld['lft']);
-			unset($issueOld['rgt']);
 			
 			// Update fields for new version of issue
 			$issueOld['project_id'] = $this->projectsMapping[$idProjectOld];
@@ -221,8 +215,6 @@ class Migrator
 		foreach ($projectsOld as $projectOld)
 		{
 			unset($projectOld['id']);
-			unset($projectOld['lft']);
-			unset($projectOld['rgt']);
 			$idProjectNew = $this->dbNew->insert('projects', $projectOld);
 			$this->projectsMapping[$idProjectOld] = $idProjectNew;
 			
