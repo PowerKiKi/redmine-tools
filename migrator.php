@@ -146,7 +146,7 @@ class Migrator
             $idCategoryOld = $categoryOld['id'];
             unset($categoryOld['id']);
             $categoryOld['project_id'] = $this->projectsMapping[$idProjectOld];
-            $categoryOld['assigned_to_id'] = replaceUser($categoryOld['assigned_to_id']);
+            $categoryOld['assigned_to_id'] = $this->replaceUser($categoryOld['assigned_to_id']);
 
             $idCategoryNew = $this->dbNew->insert('issue_categories', $categoryOld);
             $this->categoriesMapping[$idCategoryOld] = $idCategoryNew;
