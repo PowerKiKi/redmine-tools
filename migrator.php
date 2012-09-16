@@ -607,10 +607,10 @@ class Migrator
             $idProjectNew = $this->dbNew->insert('projects', $projectOld);
             $this->projectsMapping[$idProjectOld] = $idProjectNew;
             echo "migrating old redmine $idProjectOld => to new redmine $idProjectNew\n";
+            $this->migrateVersions($idProjectOld);
             $this->migrateCategories($idProjectOld);
             $this->migrateIssues($idProjectOld);
             $this->migrateNews($idProjectOld);
-            $this->migrateVersions($idProjectOld);
             $this->migrateDocuments($idProjectOld);
             $this->migrateBoards($idProjectOld);
             $this->migrateTimeEntries($idProjectOld);
@@ -618,7 +618,7 @@ class Migrator
 
             $this->migrateWikis($idProjectOld);
             $this->migrateAttachments($idProjectOld);
-	    $this->migrateWatchers($idIssueOld);
+	    $this->migrateWatchers($idProjectOld);
         }
 		
         echo 'projects: ' . count($this->projectsMapping) . " <br>\n";
