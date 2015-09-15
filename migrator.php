@@ -1,22 +1,29 @@
 <?php
 
 /**
-  * See README.md for instructions
-  */
+ * See README.md for instructions
+ */
 
-require_once(dirname(__FILE__) . '/Library/DBMysql.php');
+require_once dirname(__FILE__) . '/Library/DBMysql.php';
 
-class Migrator
+class migrator
 {
-    var $dbOld = null;
-    var $dbNew = null;
+    /**
+     * @var DBMysql
+     */
+    private $dbOld = null;
 
-    var $usersMapping = array(
+    /**
+     * @var DBMysql
+     */
+    private $dbNew = null;
+
+    private $usersMapping = array(
             1 =>  1,
-            7  =>  247
+            7  =>  247,
         );
 
-    var $prioritiesMapping = array(
+    private $prioritiesMapping = array(
             3 => 3,
             4 => 4,
             5 => 5,
@@ -24,7 +31,7 @@ class Migrator
             7 => 7,
         );
 
-    var $statusMapping = array(
+    private $statusMapping = array(
             1   =>  1,
             2   =>  2,
             3   =>  3,
@@ -36,37 +43,37 @@ class Migrator
             9   =>  9,
             10  =>  10,
             11  =>  11,
-            12  =>  12
+            12  =>  12,
     );
 
-    var $trackersMapping = array(
+    private $trackersMapping = array(
             1 => 1,
             2 => 2,
             3 => 3,
-            4 => 4
+            4 => 4,
     );
 
-    var $projectsMapping = array();
-    var $categoriesMapping = array();
-    var $versionsMapping = array();
-    var $journalsMapping = array();
-    var $issuesMapping = array();
-    var $timeEntriesMapping = array();
-    var $modulesMapping = array();
+    private $projectsMapping = array();
+    private $categoriesMapping = array();
+    private $versionsMapping = array();
+    private $journalsMapping = array();
+    private $issuesMapping = array();
+    private $timeEntriesMapping = array();
+    private $modulesMapping = array();
 
-    var $watchersMapping = array();
-    var $boardsMapping = array();
-    var $messagesMapping = array();
-    var $newsMapping = array();
-    var $documentsMapping = array();
-    var $wikisMapping = array();
-    var $wikipagesMapping = array();
-    var $wikiContentVersionsMapping = array();
-    var $wikiContentsMapping = array();
+    private $watchersMapping = array();
+    private $boardsMapping = array();
+    private $messagesMapping = array();
+    private $newsMapping = array();
+    private $documentsMapping = array();
+    private $wikisMapping = array();
+    private $wikipagesMapping = array();
+    private $wikiContentVersionsMapping = array();
+    private $wikiContentsMapping = array();
 
-    var $nbAt = 0;
+    private $nbAt = 0;
 
-    function __construct($host1, $db1, $user1, $pass1, $host2, $db2, $user2, $pass2)
+    public function __construct($host1, $db1, $user1, $pass1, $host2, $db2, $user2, $pass2)
     {
         $this->dbOld = new DBMysql($host1, $user1, $pass1);
         $this->dbOld->connect($db1);
@@ -77,89 +84,100 @@ class Migrator
 
     private function replaceUser($idUserOld)
     {
-        if ($idUserOld == null)
+        if ($idUserOld == null) {
             return null;
+        }
 
-        if (!isset($this->usersMapping[$idUserOld]))
+        if (!isset($this->usersMapping[$idUserOld])) {
             throw new Exception("No mapping defined for old user id '$idUserOld'");
-        else
+        } else {
             return $this->usersMapping[$idUserOld];
+        }
     }
 
     private function replaceMessage($idMessageOld)
     {
-        if ($idMessageOld == null)
+        if ($idMessageOld == null) {
             return null;
+        }
 
-        if (!isset($this->messagesMapping[$idMessageOld]))
+        if (!isset($this->messagesMapping[$idMessageOld])) {
             throw new Exception("No mapping defined for old message id '$idMessageOld'");
-        else
+        } else {
             return $this->messagesMapping[$idMessageOld];
+        }
     }
 
     private function replacePriority($idPriorityOld)
     {
-        if ($idPriorityOld == null)
+        if ($idPriorityOld == null) {
             return null;
+        }
 
-        if (!isset($this->prioritiesMapping[$idPriorityOld]))
+        if (!isset($this->prioritiesMapping[$idPriorityOld])) {
             throw new Exception("No mapping defined for old priority id '$idPriorityOld'");
-        else
+        } else {
             return $this->prioritiesMapping[$idPriorityOld];
+        }
     }
-
 
     private function replaceIssue($idIssueOld)
     {
-        if ($idIssueOld == null)
+        if ($idIssueOld == null) {
             return null;
+        }
 
-        if (!isset($this->issuesMapping[$idIssueOld]))
+        if (!isset($this->issuesMapping[$idIssueOld])) {
             throw new Exception("No status defined for old status id '$idIssueOld'");
-        else
+        } else {
             return $this->issuesMapping[$idIssueOld];
+        }
     }
-
 
     private function replaceStatus($idStatusOld)
     {
-        if ($idStatusOld == null)
+        if ($idStatusOld == null) {
             return null;
+        }
 
-        if (!isset($this->statusMapping[$idStatusOld]))
+        if (!isset($this->statusMapping[$idStatusOld])) {
             throw new Exception("No status defined for old status id '$idStatusOld'");
-        else
+        } else {
             return $this->statusMapping[$idStatusOld];
+        }
     }
 
     private function replaceTracker($idTrackerOld)
     {
-        if ($idTrackerOld == null)
+        if ($idTrackerOld == null) {
             return null;
+        }
 
-        if (!isset($this->trackersMapping[$idTrackerOld]))
+        if (!isset($this->trackersMapping[$idTrackerOld])) {
             throw new Exception("No status defined for old tracker id '$idTrackerOld'");
-        else
+        } else {
             return $this->trackersMapping[$idTrackerOld];
+        }
     }
 
     private function replaceCategory($idCategoryOld)
     {
-        if ($idCategoryOld == null)
+        if ($idCategoryOld == null) {
             return null;
+        }
 
-        if (!isset($this->categoriesMapping[$idCategoryOld]))
+        if (!isset($this->categoriesMapping[$idCategoryOld])) {
             throw new Exception("No category defined for old category id '$idCategoryOld'");
-        else
+        } else {
             return $this->categoriesMapping[$idCategoryOld];
+        }
     }
 
     private function migrateCategories($idProjectOld)
     {
         $result = $this->dbOld->select('issue_categories', array('project_id' => $idProjectOld));
         $categoriesOld = $this->dbOld->getAssocArrays($result);
-        foreach ($categoriesOld as $categoryOld)
-        {
+        foreach ($categoriesOld as $categoryOld) {
             $idCategoryOld = $categoryOld['id'];
             unset($categoryOld['id']);
             $categoryOld['project_id'] = $this->projectsMapping[$idProjectOld];
@@ -174,8 +192,7 @@ class Migrator
     {
         $result = $this->dbOld->select('versions', array('project_id' => $idProjectOld));
         $versionsOld = $this->dbOld->getAssocArrays($result);
-        foreach ($versionsOld as $versionOld)
-        {
+        foreach ($versionsOld as $versionOld) {
             $idVersionOld = $versionOld['id'];
             unset($versionOld['id']);
             $versionOld['project_id'] = $this->projectsMapping[$idProjectOld];
@@ -189,8 +206,7 @@ class Migrator
     {
         $result = $this->dbOld->select('journals', array('journalized_id' => $idIssueOld));
         $journalsOld = $this->dbOld->getAssocArrays($result);
-        foreach ($journalsOld as $journal)
-        {
+        foreach ($journalsOld as $journal) {
             $idJournalOld = $journal['id'];
             unset($journal['id']);
 
@@ -209,8 +225,7 @@ class Migrator
     {
         $result = $this->dbOld->select('time_entries', array('project_id' => $idProjectOld));
         $timeEntriesOld = $this->dbOld->getAssocArrays($result);
-        foreach ($timeEntriesOld as $timeEntry)
-        {
+        foreach ($timeEntriesOld as $timeEntry) {
             $idTimeEntryOld = $timeEntry['id'];
             unset($timeEntry['id']);
 
@@ -228,8 +243,7 @@ class Migrator
     {
         $result = $this->dbOld->select('enabled_modules', array('project_id' => $idProjectOld));
         $modulesOld = $this->dbOld->getAssocArrays($result);
-        foreach ($modulesOld as $module)
-        {
+        foreach ($modulesOld as $module) {
             $idModuleOld = $module['id'];
             unset($module['id']);
 
@@ -245,8 +259,7 @@ class Migrator
     {
         $result = $this->dbOld->select('journal_details', array('journal_id' => $idJournalOld));
         $journalDetailsOld = $this->dbOld->getAssocArrays($result);
-        foreach ($journalDetailsOld as $journalDetail)
-        {
+        foreach ($journalDetailsOld as $journalDetail) {
             unset($journalDetail['id']);
 
             // Update fields
@@ -261,68 +274,52 @@ class Migrator
         // $result = $this->dbOld->select('attachments', array('container_type'=> 'Issue'));
         $result = $this->dbOld->select('attachments');
         $attachmentsOld = $this->dbOld->getAssocArrays($result);
-        foreach ($attachmentsOld as $aOld)
-        {
-		if($aOld['container_type'] == 'Issue' && count($this->issuesMapping) > 0)
-		{
-			if(!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->issuesMapping[$aOld['container_id']]))
-			{
-				continue;
-			}
-			else
-				$aOld['container_id'] = $this->replaceIssue($aOld['container_id']);
-		}
-
-		else if($aOld['container_type'] == 'Version' && count($this->versionsMapping) > 0)
-		{
-			if(!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->versionsMapping[$aOld['container_id']]))
-			{
-				continue;
-			}
-			else
-				$aOld['container_id'] = $this->versionsMapping[$aOld['container_id']];
-		}
-
-		else if($aOld['container_type'] == 'Project' && count($this->projectsMapping) > 0) {
-			if(!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->projectsMapping[$aOld['container_id']])){
-				continue;
-			}
-			else
-				$aOld['container_id'] = $this->projectsMapping[$aOld['container_id']];
-		}
-
-		else if($aOld['container_type'] == 'Message' && count($this->messagesMapping) > 0) {
-			if(!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->messagesMapping[$aOld['container_id']])){
-				continue;
-			}
-			else
-				$aOld['container_id'] = $this->messagesMapping[$aOld['container_id']];
-		}
-
-		else if($aOld['container_type'] == 'WikiPage' && count($this->wikipagesMapping) > 0) {
-			if(!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->wikipagesMapping[$aOld['container_id']])){
-				continue;
-			}
-			else
-				$aOld['container_id'] = $this->wikipagesMapping[$aOld['container_id']];
-		}
-
-		else if($aOld['container_type'] == 'Document' && count($this->documentsMapping) > 0) {
-			if(!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->documentsMapping[$aOld['container_id']])){
-				continue;
-			}
-			else
-				$aOld['container_id'] = $this->documentsMapping[$aOld['container_id']];
-		}
-            else continue;
-
+        foreach ($attachmentsOld as $aOld) {
+            if ($aOld['container_type'] == 'Issue' && count($this->issuesMapping) > 0) {
+                if (!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->issuesMapping[$aOld['container_id']])) {
+                    continue;
+                } else {
+                    $aOld['container_id'] = $this->replaceIssue($aOld['container_id']);
+                }
+            } elseif ($aOld['container_type'] == 'Version' && count($this->versionsMapping) > 0) {
+                if (!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->versionsMapping[$aOld['container_id']])) {
+                    continue;
+                } else {
+                    $aOld['container_id'] = $this->versionsMapping[$aOld['container_id']];
+                }
+            } elseif ($aOld['container_type'] == 'Project' && count($this->projectsMapping) > 0) {
+                if (!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->projectsMapping[$aOld['container_id']])) {
+                    continue;
+                } else {
+                    $aOld['container_id'] = $this->projectsMapping[$aOld['container_id']];
+                }
+            } elseif ($aOld['container_type'] == 'Message' && count($this->messagesMapping) > 0) {
+                if (!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->messagesMapping[$aOld['container_id']])) {
+                    continue;
+                } else {
+                    $aOld['container_id'] = $this->messagesMapping[$aOld['container_id']];
+                }
+            } elseif ($aOld['container_type'] == 'WikiPage' && count($this->wikipagesMapping) > 0) {
+                if (!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->wikipagesMapping[$aOld['container_id']])) {
+                    continue;
+                } else {
+                    $aOld['container_id'] = $this->wikipagesMapping[$aOld['container_id']];
+                }
+            } elseif ($aOld['container_type'] == 'Document' && count($this->documentsMapping) > 0) {
+                if (!isset($this->usersMapping[$aOld['author_id']]) || !isset($this->documentsMapping[$aOld['container_id']])) {
+                    continue;
+                } else {
+                    $aOld['container_id'] = $this->documentsMapping[$aOld['container_id']];
+                }
+            } else {
+                continue;
+            }
 
             $idAOld = $aOld['id'];
             unset($aOld['id']);
 
             // Update fields for new version of issue
             $aOld['author_id'] = $this->replaceUser($aOld['author_id']);
-
 
             $idANew = $this->dbNew->insert('attachments', $aOld);
             $this->nbAt++;
@@ -333,56 +330,43 @@ class Migrator
     {
         $result = $this->dbOld->select('watchers');
         $watchersOld = $this->dbOld->getAssocArrays($result);
-        foreach ($watchersOld as $watcher)
-        {
-	    $idWatcherOld = $watcher['id'];
+        foreach ($watchersOld as $watcher) {
+            $idWatcherOld = $watcher['id'];
             unset($watcher['id']);
 
-	    if($watcher['watchable_type'] == 'Issue' && count($this->issuesMapping) > 0)
-	    {
-		if(!isset($this->usersMapping[$watcher['user_id']]) || !isset($this->issuesMapping[$watcher['watchable_id']]))
-		{
-			continue;
-		}
-		else
-			$watcher['watchable_id'] = $this->issuesMapping[$watcher['watchable_id']];
-    	    }
-
-	    else if($watcher['watchable_type'] == 'Board' && count($this->boardsMapping) > 0)
-	    {
-		if(!isset($this->usersMapping[$watcher['user_id']]) || !isset($this->boardsMapping[$watcher['watchable_id']]))
-		{
-			continue;
-		}
-		else
-			$watcher['watchable_id'] = $this->boardsMapping[$watcher['watchable_id']];
-	    }
-
-	    else if($watcher['watchable_type'] == 'News' && count($this->newsMapping) > 0) {
-		if(!isset($this->usersMapping[$watcher['user_id']]) || !isset($this->newsMapping[$watcher['watchable_id']])){
-			continue;
-		}
-		else
-			$watcher['watchable_id'] = $this->newsMapping[$watcher['watchable_id']];
-	    }
-
-	    else if($watcher['watchable_type'] == 'Message' && count($this->messagesMapping) > 0) {
-		if(!isset($this->usersMapping[$watcher['user_id']]) || !isset($this->messagesMapping[$watcher['watchable_id']])){
-			continue;
-		}
-		else
-			$watcher['watchable_id'] = $this->messagesMapping[$watcher['watchable_id']];
-	    }
-
-	    else if($watcher['watchable_type'] == 'WikiPage' && count($this->wikipagesMapping) > 0) {
-		if(!isset($this->usersMapping[$watcher['user_id']]) || !isset($this->wikipagesMapping[$watcher['watchable_id']])){
-			continue;
-		}
-		else
-			$watcher['watchable_id'] = $this->wikipagesMapping[$watcher['watchable_id']];
-	    }
-
-            else continue;
+            if ($watcher['watchable_type'] == 'Issue' && count($this->issuesMapping) > 0) {
+                if (!isset($this->usersMapping[$watcher['user_id']]) || !isset($this->issuesMapping[$watcher['watchable_id']])) {
+                    continue;
+                } else {
+                    $watcher['watchable_id'] = $this->issuesMapping[$watcher['watchable_id']];
+                }
+            } elseif ($watcher['watchable_type'] == 'Board' && count($this->boardsMapping) > 0) {
+                if (!isset($this->usersMapping[$watcher['user_id']]) || !isset($this->boardsMapping[$watcher['watchable_id']])) {
+                    continue;
+                } else {
+                    $watcher['watchable_id'] = $this->boardsMapping[$watcher['watchable_id']];
+                }
+            } elseif ($watcher['watchable_type'] == 'News' && count($this->newsMapping) > 0) {
+                if (!isset($this->usersMapping[$watcher['user_id']]) || !isset($this->newsMapping[$watcher['watchable_id']])) {
+                    continue;
+                } else {
+                    $watcher['watchable_id'] = $this->newsMapping[$watcher['watchable_id']];
+                }
+            } elseif ($watcher['watchable_type'] == 'Message' && count($this->messagesMapping) > 0) {
+                if (!isset($this->usersMapping[$watcher['user_id']]) || !isset($this->messagesMapping[$watcher['watchable_id']])) {
+                    continue;
+                } else {
+                    $watcher['watchable_id'] = $this->messagesMapping[$watcher['watchable_id']];
+                }
+            } elseif ($watcher['watchable_type'] == 'WikiPage' && count($this->wikipagesMapping) > 0) {
+                if (!isset($this->usersMapping[$watcher['user_id']]) || !isset($this->wikipagesMapping[$watcher['watchable_id']])) {
+                    continue;
+                } else {
+                    $watcher['watchable_id'] = $this->wikipagesMapping[$watcher['watchable_id']];
+                }
+            } else {
+                continue;
+            }
 
             // Update fields for watchers
             $watcher['user_id'] = $this->replaceUser($watcher['user_id']);
@@ -397,15 +381,14 @@ class Migrator
     {
         $result = $this->dbOld->select('messages', array('board_id' => $idBoardOld));
         $messagesOld = $this->dbOld->getAssocArrays($result);
-        foreach ($messagesOld as $message)
-        {
+        foreach ($messagesOld as $message) {
             $idMessageOld = $message['id'];
             unset($message['id']);
 
             // Update fields
             $message['author_id'] = $this->replaceUser($message['author_id']);
             $message['board_id'] = $this->boardsMapping[$idBoardOld];
- 	    $message['parent_id'] = $this->replaceMessage($message['parent_id']);
+            $message['parent_id'] = $this->replaceMessage($message['parent_id']);
             // last_reply_id not processed
 
             $idMessageNew = $this->dbNew->insert('messages', $message);
@@ -417,8 +400,7 @@ class Migrator
     {
         $result = $this->dbOld->select('boards', array('project_id' => $idProjectOld));
         $boardsOld = $this->dbOld->getAssocArrays($result);
-        foreach ($boardsOld as $boardOld)
-        {
+        foreach ($boardsOld as $boardOld) {
             $idBoardOld = $boardOld['id'];
             unset($boardOld['id']);
 
@@ -436,8 +418,7 @@ class Migrator
     {
         $result = $this->dbOld->select('news', array('project_id' => $idProjectOld));
         $newssOld = $this->dbOld->getAssocArrays($result);
-        foreach ($newssOld as $newsOld)
-        {
+        foreach ($newssOld as $newsOld) {
             $idNewsOld = $newsOld['id'];
             unset($newsOld['id']);
 
@@ -454,8 +435,7 @@ class Migrator
     {
         $result = $this->dbOld->select('documents', array('project_id' => $idProjectOld));
         $documentsOld = $this->dbOld->getAssocArrays($result);
-        foreach ($documentsOld as $documentOld)
-        {
+        foreach ($documentsOld as $documentOld) {
             $idDocumentsOld = $documentOld['id'];
             unset($documentOld['id']);
 
@@ -471,8 +451,7 @@ class Migrator
     {
         $result = $this->dbOld->select('wiki_content_versions', array('page_id' => $idWikiPageOld, 'wiki_content_id' => $idWikiContentOld));
         $wikiContentVersionsOld = $this->dbOld->getAssocArrays($result);
-        foreach ($wikiContentVersionsOld as $wikiContentVersionOld)
-        {
+        foreach ($wikiContentVersionsOld as $wikiContentVersionOld) {
             $idWikiContentVersionOld = $wikiContentVersionOld['id'];
             unset($wikiContentVersionOld['id']);
 
@@ -490,8 +469,7 @@ class Migrator
     {
         $result = $this->dbOld->select('wiki_contents', array('page_id' => $idWikiPageOld));
         $wikiContentsOld = $this->dbOld->getAssocArrays($result);
-        foreach ($wikiContentsOld as $wikiContentOld)
-        {
+        foreach ($wikiContentsOld as $wikiContentOld) {
             $idWikiContentOld = $wikiContentOld['id'];
             unset($wikiContentOld['id']);
 
@@ -508,10 +486,9 @@ class Migrator
 
     private function migrateWikiPageParents($idWikiOld)
     {
-        $result = $this->dbOld->query("SELECT * FROM wiki_pages"." WHERE wiki_id =".$idWikiOld." and parent_id > 0");
+        $result = $this->dbOld->query("SELECT * FROM wiki_pages" . " WHERE wiki_id =" . $idWikiOld . " and parent_id > 0");
         $wikipagesOld = $this->dbOld->getAssocArrays($result);
-        foreach ($wikipagesOld as $wikipageOld)
-        {
+        foreach ($wikipagesOld as $wikipageOld) {
             $idWikiPageNew = $this->wikipagesMapping[$wikipageOld['id']];
             unset($wikipageOld['id']);
 
@@ -527,14 +504,13 @@ class Migrator
     {
         $result = $this->dbOld->select('wiki_pages', array('wiki_id' => $idWikiOld));
         $wikipagesOld = $this->dbOld->getAssocArrays($result);
-        foreach ($wikipagesOld as $wikipageOld)
-        {
+        foreach ($wikipagesOld as $wikipageOld) {
             $idWikiPageOld = $wikipageOld['id'];
             unset($wikipageOld['id']);
 
             // Update fields for new version of wiki pages
             $wikipageOld['wiki_id'] = $this->wikisMapping[$idWikiOld];
-            $wikipageOld['parent_id'] = NULL;		// can not imagine the mapping
+            $wikipageOld['parent_id'] = null;        // can not imagine the mapping
 
             $idWikiPageNew = $this->dbNew->insert('wiki_pages', $wikipageOld);
             $this->wikipagesMapping[$idWikiPageOld] = $idWikiPageNew;
@@ -542,15 +518,14 @@ class Migrator
             $this->migrateWikiContents($idWikiPageOld);
         }
 
-	$this->migrateWikiPageParents($idWikiPageOld);
+        $this->migrateWikiPageParents($idWikiPageOld);
     }
 
     private function migrateWikis($idProjectOld)
     {
         $result = $this->dbOld->select('wikis', array('project_id' => $idProjectOld));
         $wikisOld = $this->dbOld->getAssocArrays($result);
-        foreach ($wikisOld as $wikiOld)
-        {
+        foreach ($wikisOld as $wikiOld) {
             $idWikiOld = $wikiOld['id'];
             unset($wikiOld['id']);
 
@@ -564,13 +539,11 @@ class Migrator
         }
     }
 
-
     private function migrateIssues($idProjectOld)
     {
         $result = $this->dbOld->select('issues', array('project_id' => $idProjectOld));
         $issuesOld = $this->dbOld->getAssocArrays($result);
-        foreach ($issuesOld as $issueOld)
-        {
+        foreach ($issuesOld as $issueOld) {
             $idIssueOld = $issueOld['id'];
             unset($issueOld['id']);
 
@@ -583,7 +556,9 @@ class Migrator
             $issueOld['category_id'] = $this->replaceCategory($issueOld['category_id']);
             $issueOld['tracker_id'] = $this->replaceTracker($issueOld['tracker_id']);
 
-            if ($issueOld['fixed_version_id']) $issueOld['fixed_version_id'] = $this->versionsMapping[$issueOld['fixed_version_id']];
+            if ($issueOld['fixed_version_id']) {
+                $issueOld['fixed_version_id'] = $this->versionsMapping[$issueOld['fixed_version_id']];
+            }
 
             $idIssueNew = $this->dbNew->insert('issues', $issueOld);
             $this->issuesMapping[$idIssueOld] = $idIssueNew;
@@ -592,13 +567,12 @@ class Migrator
         }
     }
 
-    function migrateProject($idProjectOld)
+    public function migrateProject($idProjectOld)
     {
         $result = $this->dbOld->select('projects', array('id' => $idProjectOld));
         $projectsOld = $this->dbOld->getAssocArrays($result);
 
-        foreach ($projectsOld as $projectOld)
-        {
+        foreach ($projectsOld as $projectOld) {
             unset($projectOld['id']);
             $idProjectNew = $this->dbNew->insert('projects', $projectOld);
             $this->projectsMapping[$idProjectOld] = $idProjectNew;
@@ -633,10 +607,9 @@ class Migrator
         echo 'wiki pages: ' . count($this->wikipagesMapping) . " <br>\n";
         echo 'wiki contents: ' . count($this->wikiContentsMapping) . " <br>\n";
         echo 'wiki content versions: ' . count($this->wikiContentVersionsMapping) . " <br>\n";
-
     }
 }
 
-$migrator = new Migrator(   'localhost', 'redmine', 'root', '',
+$migrator = new migrator('localhost', 'redmine', 'root', '',
                             'localhost', 'redmine_new',   'root', '');
 $migrator->migrateProject(86);

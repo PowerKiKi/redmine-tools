@@ -18,13 +18,13 @@ import the following objects:
   - boards & messages
   - modules status (wether it is active for the project)
 
-It relies on manual mapping for users and priorities as they should already exist in target database.
+It relies on manual mapping for users, priorities, statuses and trackers as they should already exist in target database.
 
 All modifications of the target database are **live**. So it is strongly advised to test against a dummy database first.
 
 USAGE
 -----
 
-  1. update manual mapping for users, status and priorities (see $usersMapping and $prioritiesMapping)
+  1. update manual mapping (see `$usersMapping`, `$prioritiesMapping`, `$statusMapping` and `$trackersMapping`)
   2. update database connection data and project ID to migrate
   3. run the script
