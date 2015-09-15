@@ -1,339 +1,485 @@
 <?php
-//**********************************************************/
-// CLASSE D'INTERFACAGE OBJET POUR UNE BD MYSQL(V4.1 ou sup)
-//**********************************************************/
-//
-//	METHODES(resume et paramètres):
-//
-//			__construct($host="localhost", $user="root", $pwd="")
-//					constructeur de la classe
-//			__destruct()
-//					destructeur de la classe
-//			Connect($bdName="")
-//					connexion a un serveur BD mysql 4.1 ou sup
-//			Disconnect($mode=self::cstModeError)
-//					deconnexion a un serveur BD mysql 4.1 ou sup
-//			SelectBd($bdName)
-//					Selectione une des bases de donnees du serveur
-//			Query($query)
-//					Execute une requete dans la base en cours du serveur et retourne le resultat (si il y en a un).
-//					Retourne FALSE si la requete echoue.
-//			TblExist($tblName)
-//					Retounre true/false selon que la table existe/n'existe pas
-//			EscapeStr($str)
-//					formatte une chaine de caractèe au format Mysql
-//
-//	UTILISATION:
-//
-//	- CREE L'OBJET D'INTERFACAGE A UN SERVEUR MYSQL 4.1 OU SUP
-//		REMARQUE: SI LES PARAMETRES SONT OMIS "localhost", "root" et "" SERONT MIS PAR DEFAUT
-//			$mysql = new InterfaceMysqli("hostname","username","pwd");
-//
-//	- POUR SE CONNECTER A MYSQL
-//			$mysql->Connect();
-//		OU POUR SE CONNECTER DIRECTEMENT A UNE DES BD
-//			$mysql->Connect("nomDeLaBase");
-//
-//	- POUR SE DECONNECTER
-//		REMARQUE: LA DECONNEXION FINALE (EN FIN DE SCRIPT) EST AUTOMATIQUE
-//			$mysql->Disconnect();
-//
-//	- POUR SELECTIONNER UNE BD DU SERVEUR MYSQL
-//			$mysql->SelectBd("nomDeLaBase");
-//
-//	- POUR FAIRE UNE REQUETE SIMPLE
-//			$mysql->Query("CREATE TABLE `test` (`test` VARCHAR( 12 ) NOT NULL)");
-//
-//	- POUR FAIRE UNE REQUETE RETOURNANT DES RESULTATS
-//			$result = $mysql->Query("SELECT * FROM `test`");
-//		LA METHODE RETOURNE FALSE SI AUCUNE DONNEES N'EST RETOUNREE
-//			if (!$mysql->Query("SELECT * FROM `tblUser` WHERE username='Nicolas'")) {echo ("ce username n'existe pas");}
-//
-//	- POUR SAVOIR SI UNE TABLE EXISTE
-//			If ($mysql->TblExist("nomDeLaTable")) { ... }
-//
-//	- POUR ENLEVER LES CARACTERES QUE LA BD NE SUPPORTE PAS
-//			$valueToInsert = mysql->EscapeStr("c'est une valeur avec des ' que mysql n'aime pas");
-//
-//
-//	REMARQUE:
-//		- Le module Mysqli doit être active pour php5
-//
-// Modifications:
-// 		- 27.12.7 par mathieu@ecodev.ch => ajout du support de order by pour la fonction: select
-//		- 27.12.7 par mathieu@ecodev.ch => la fonction: insert, retourne maintenant l'id de la nouvelle entrée insérée. ($this->bdlink->insert_id) La valeur retournée = 0 si aucun autoincrément existe.
-//*********************************************************/
-// DECLARATION DE LA CLASSE
-//*********************************************************/
 
-class DBMysql {
-	protected $hostname, $username, $pwd, $bdLink, $bdName;
-	const cstErrConnect = "Impossible de se connecter a la base de donnees";
-	const cstErrSelectBD = "Impossible de selectionner la base de donnees";
-	const cstErrReconnect = "Connexion a la BD impossible, une autre conexion est deja en cours";
-	const cstErrConnInactive = "Impossible car la connexion a la BD est inactive";
-	const cstErrQuery = "La requete a echouee";
-	const cstModeNoError = 0;
-	const cstModeError = 1;
+/**
+ * CLASSE D'INTERFACAGE OBJET POUR UNE BD MYSQL(V4.1 ou sup)
+ *
+ *    USAGE:
+ *
+ *    $mysql = new DBMysql("hostname","username","password");
+ *    $mysql->connect("nomDeLaBase");
+ *
+ *    $result = $mysql->select(array('table'));
+ *    $allRecords = $mysql->getAssocArrays($result);
+ *
+ *    $mysql->query("CREATE TABLE `test` (`test` VARCHAR( 12 ) NOT NULL)");
+ *
+ */
+class DBMysql
+{
+    /**
+     * @var string
+     */
+    protected $hostname;
 
-	function __construct($host, $user, $pwd) {
+    /**
+     * @var string
+     */
+    protected $username;
 
-		$this->hostname = $host;
-		$this->username = $user;
-		$this->pwd = $pwd;
-		unset ($this->bdLink);
-	}
+    /**
+     * @var string
+     */
+    protected $password;
 
-	function __destruct() {
-		self::disconnect();
-	}
+    /**
+     * @var string
+     */
+    protected $port;
 
+    /**
+     * @var string
+     */
+    protected $databaseName;
 
-// est ce qu'avoir une connexion persistante avec mysqli_pconnect permettrai de gagner en performance ??
-	function connect($bdName = "") {
-		$this->bdLink = @ mysqli_connect($this->hostname, $this->username, $this->pwd);		
-		self::GestionErreur(!$this->bdLink, 'Connect - '.self::cstErrConnect.' '.$this->hostname);
-		if ($bdName != "") {
-			self::SelectBd($bdName);
-		}
-		//request with UTF-8 character set according to http://se.php.net/manual/en/function.mysqli-query.php
-		$this->bdLink->query("SET NAMES 'utf8'");
-	}
+    /**
+     * @var resource
+     */
+    protected $bdLink;
 
-	function disconnect($mode = self::cstModeError) {
-		if ($mode == self::cstModeError) {
-			self::GestionErreur(!isset ($this->bdLink), "Disconnect - ".self::cstErrConnInactive);
-		}
-		@ mysqli_close($this->bdLink);
-		unset ($this->bdLink);
-	}
+    const ERROR_CONNECT = "Impossible de se connecter a la base de donnees";
+    const ERROR_SELECT_DB = "Impossible de selectionner la base de donnees";
+    const ERROR_NO_CONNECTION = "Impossible car la connexion a la BD est inactive";
+    const ERROR_SQL_FAILED = "La requete a echouee";
 
-	// start manual transaction (make sure mysqli autocommit is turned off)
-	function startTransaction() {
-		self::GestionErreur(!isset ($this->bdLink), "Start transaction - ".self::cstErrConnInactive);
-		mysqli_autocommit($this->bdLink,false);
-	}
+    /**
+     * Constructor
+     * @param string $host
+     * @param string $username
+     * @param string $password
+     * @param integer $port
+     */
+    public function __construct($host, $username, $password, $port = 3306)
+    {
+        $this->hostname = $host;
+        $this->username = $username;
+        $this->password = $password;
+        $this->port = $port;
+        unset($this->bdLink);
+    }
 
-	function commit() {
-		self::GestionErreur(!isset ($this->bdLink), "Commit transaction - ".self::cstErrConnInactive);
-		mysqli_commit($this->bdLink);
-	}
+    /**
+     * Destructor
+     */
+    public function __destruct()
+    {
+        $this->disconnect();
+    }
 
-	function rollback() {
-		self::GestionErreur(!isset ($this->bdLink), "Rollback transaction - ".self::cstErrConnInactive);
-		mysqli_rollback($this->bdLink);
-	}
+    /**
+     * Connect to database
+     * @param string $databaseName
+     */
+    public function connect($databaseName = "")
+    {
+        $this->bdLink = @ mysqli_connect($this->hostname, $this->username, $this->password, '', $this->port);
+        $this->gestionErreur(!$this->bdLink, 'Connect - ' . self::ERROR_CONNECT . ' ' . $this->hostname);
+        if ($databaseName != "") {
+            $this->selectBd($databaseName);
+        }
 
-	function selectBd($bdName) {
-		self::GestionErreur(!isset ($this->bdLink), "SelectBd - ".self::cstErrConnInactive);
-		$this->bdName = $bdName;
-		self::GestionErreur(!@ mysqli_select_db($this->bdLink, $bdName), "SelectBd - ".self::cstErrSelectBD.' '.$this->bdName);
-	}
+        //request with UTF-8 character set according to http://se.php.net/manual/en/function.mysqli-query.php
+        $this->bdLink->query("SET NAMES 'utf8'");
+    }
 
-	function query($query){
-		self::GestionErreur(!isset ($this->bdLink), "Query - ".self::cstErrConnInactive);
-		self::GestionErreur(!@ mysqli_real_query($this->bdLink, $query), "Query - ".self::cstErrQuery.' <pre>'.$query . '</pre>');
+    /**
+     * Disconnect from database
+     * @param string $errorMessage
+     */
+    public function disconnect()
+    {
+        if (isset($this->bdLink)) {
+            @ mysqli_close($this->bdLink);
+            unset($this->bdLink);
+        }
+    }
 
-		//si c'est une requête qui n'est pas cense ramener qqchose on stop
-		if (@ mysqli_field_count($this->bdLink) == 0) {
-			return true;
-		}
-		$result = @ mysqli_store_result($this->bdLink);
-		if (@ mysqli_num_rows($result) > 0) {
-			return $result;
-		} else {
-			return false;
-		}
-	}
+    /**
+     * Start transaction (by making sure mysqli autocommit is turned off)
+     */
+    public function startTransaction()
+    {
+        $this->gestionErreur(!isset($this->bdLink), "Start transaction - " . self::ERROR_NO_CONNECTION);
+        mysqli_autocommit($this->bdLink, false);
+    }
 
-	function tblExist($tblName) {
-		self::GestionErreur(!isset ($this->bdLink), "TblExist - ".self::cstErrConnInactive);
-		return self::Query("SHOW TABLES FROM ".$this->bdName." LIKE '".$tblName."'");
-	}
+    /**
+     * Commit current transaction
+     */
+    public function commit()
+    {
+        $this->gestionErreur(!isset($this->bdLink), "Commit transaction - " . self::ERROR_NO_CONNECTION);
+        mysqli_commit($this->bdLink);
+    }
 
-	function escapeStr($str) {
-		return mysqli_real_escape_string($this->bdLink, $str);
-	}
+    /**
+     * Rollback current transaction
+     */
+    public function rollback()
+    {
+        $this->gestionErreur(!isset($this->bdLink), "Rollback transaction - " . self::ERROR_NO_CONNECTION);
+        mysqli_rollback($this->bdLink);
+    }
 
-	// callback internal function to be use with array_walk()
-	protected function addQuotes(&$item, $key) {
-		if($item == '') {
-			$item = '""';
-		} else {
-			$item = "'".$this->escapeStr($item)."'";
-		}
-	}
+    /**
+     * Select database
+     * @param string $databaseName
+     */
+    public function selectBd($databaseName)
+    {
+        $this->gestionErreur(!isset($this->bdLink), "SelectBd - " . self::ERROR_NO_CONNECTION);
+        $this->databaseName = $databaseName;
+        $this->gestionErreur(!@ mysqli_select_db($this->bdLink, $databaseName), "SelectBd - " . self::ERROR_SELECT_DB . ' ' . $this->databaseName);
+    }
 
-	/***********************************************************
-	 * GET AN OBJECT FROM	A RESULTSET
-	 ***********************************************************/
-	function getObject($result,$objectName) {
-		$obj = null;
-		if ($result != null) {
-			$row = $result->fetch_assoc();
-			$constructor = 'new '.$objectName.'(';
-			foreach($row as $value){
-				$constructor = $constructor.'\''.$value.'\',';
-			}
-			$constructor = substr($constructor,0,strlen($constructor)-1).')'; //delete the last "," and add ")"
-			eval("\$obj = $constructor;"); //evalue the constructor
-		}
-		return $obj;
-	}
+    /**
+     * Execute SQL query
+     * @param string $query
+     * @return mysqli_result|boolean mysqli_result if results are expected, true otherwise and null if no results
+     */
+    public function query($query)
+    {
+        $this->gestionErreur(!isset($this->bdLink), "Query - " . self::ERROR_NO_CONNECTION);
+        $this->gestionErreur(!@ mysqli_real_query($this->bdLink, $query), "Query - " . self::ERROR_SQL_FAILED . ' ' . $query);
 
-	/***********************************************************
-	 * GET MANY OBJECT FROM	A RESULTSET
-	 ***********************************************************/
-	function getObjects($result,$objectName) {
-		$arrayObjects = array();
-		if ($result != null) {
-			while ($row = $result->fetch_assoc()) {
-				$constructor = 'new '.$objectName.'(';
-				foreach($row as $value){
-					$constructor = $constructor.'\''.$value.'\',';
-				}
-				$constructor = substr($constructor,0,strlen($constructor)-1).')'; //delete the last "," and add ")"
-				eval("\$obj = $constructor;"); //evalue the constructor
-				$arrayObjects[] = $obj;
-			}
-		}
-		return $arrayObjects;
-	}
-	/***********************************************************
-	 * GET ONE ROW ARRAY
-	 ***********************************************************/
-	function getRowArrays($result) {
-		$arrayFromResultSet = array();
-		if ($result != null) {
-			while ($row = $result->fetch_row()){
-				foreach ($row as $value){
-					$arrayFromResultSet[] = stripcslashes($value);
-				}
-			}
-		}
-		return $arrayFromResultSet;
-	}
+        //si c'est une requête qui n'est pas cense ramener qqchose on stop
+        if (@ mysqli_field_count($this->bdLink) == 0) {
+            return true;
+        }
 
-	/***********************************************************
-	 * GET ONE ASSOCIATIVE ARRAY
-	 ***********************************************************/
-	function getAssocArray($result) {
-		$return = array ();
-		if ($result != null)
-		$return = $result->fetch_assoc();
-		return $return;
-	}
+        $result = @ mysqli_store_result($this->bdLink);
+        if (@ mysqli_num_rows($result) > 0) {
+            return $result;
+        } else {
+            return null;
+        }
+    }
 
-	/***********************************************************
-	 * GET MANY ASSOCIATIVE ARRAY
-	 ***********************************************************/
-	function getAssocArrays($result) {
-		$contentArray = array ();
-		if ($result != null) {
-			while ($row = $result->fetch_assoc()) {
-				$contentArray[] = $row;
-			}
-		}
-		return $contentArray;
-	}
+    /**
+     * Returns wether a table exists
+     * @param string $tableName
+     * @return boolean
+     */
+    public function tblExist($tableName)
+    {
+        $this->gestionErreur(!isset($this->bdLink), "TblExist - " . self::ERROR_NO_CONNECTION);
 
-	/***********************************************************
-	 * INSERT A RECORD FROM AN ASSOCIATIVE ARRAY
-	 ***********************************************************/
-	function insert($table,$fields) {
-		// protect and quote every data to insert
-		array_walk($fields,array($this,'addQuotes'));
+        return $this->query("SHOW TABLES FROM `" . $this->databaseName . "` LIKE '" . $tableName . "'");
+    }
 
-		$query = "INSERT INTO `$table` (".implode(',',array_keys($fields)).") VALUES (".implode(',',array_values($fields)).")";
-		$result = self::query($query);
-		// retourne l'id de la nouvelle entrée ou false si une erreur s'est produite
-		if($result){
-			return $this->bdLink->insert_id;
-		}else{
-			return false;
-		}
-	}
+    /**
+     * Escape string for inclusion in SQL
+     * @param string $str
+     * @return string escaped string
+     */
+    public function escape($str)
+    {
+        if (is_null($str)) {
+            return 'NULL';
+        } else {
+            return "'" . mysqli_real_escape_string($this->bdLink, $str) . "'";
+        }
+    }
 
-	/***********************************************************
-	 * DELETE RECORDS FROM AN ASSOCIATIVE ARRAY
-	 ***********************************************************/
-	function delete($table,$clauses = array()) {
-		// protect and quote every data to insert
-		array_walk($clauses,array($this,'addQuotes'));
+    /**
+     * Internal callback to be used with array_walk()
+     * @param string $item
+     * @param mixed $key
+     */
+    protected function addQuotes(&$item)
+    {
+        $item = $this->escape($item);
+    }
 
-		$query = "DELETE FROM `$table`";
-		if(!empty($clauses)){
-			foreach($clauses as $key => $value) {
-				$clauses2Sql[] = "`$key`=$value";
-			}
-			$query .= " WHERE ".implode(' AND ',array_values($clauses2Sql))."";
-		}
-		return self::query($query);
-	}
+    /**
+     * Get one object from a resultset
+     * @param mysqli_result $result
+     * @param string $className
+     * @return Object of type $className
+     */
+    public function getObject(mysqli_result $result = null, $className)
+    {
+        $obj = null;
+        if ($result != null) {
+            $row = $result->fetch_assoc();
+            $constructor = 'new ' . $className . '(';
+            foreach ($row as $value) {
+                $constructor = $constructor . '\'' . $value . '\',';
+            }
+            $constructor = substr($constructor, 0, strlen($constructor) - 1) . ')'; //delete the last "," and add ")"
+            eval("\$obj = $constructor;"); //evalue the constructor
+        }
 
-	/***********************************************************
-	 * SELECT RECORDS FROM AN ASSOCIATIVE ARRAY  => modif: 27.12.7: ajout du order by
-	 ***********************************************************/
-	function select($tables,$clauses = array(),$fields = array('*'),$orderBy='') {
-		$tables = explode(',',$tables);
-		// protect and quote every data to insert
-		array_walk($clauses,array($this,'addQuotes'));
+        return $obj;
+    }
 
-		$query = "SELECT ".implode(',',array_values($fields))." FROM `".implode('`,`',array_values($tables))."`";
+    /**
+     * Get an array of objects from a resultset
+     * @param mysqli_result $result
+     * @param string $className
+     * @return Object[] of type $className
+     */
+    public function getObjects(mysqli_result $result = null, $className)
+    {
+        $arrayObjects = array();
+        if ($result != null) {
+            while ($row = $result->fetch_assoc()) {
+                $constructor = 'new ' . $className . '(';
+                foreach ($row as $value) {
+                    $constructor = $constructor . '\'' . $value . '\',';
+                }
+                $constructor = substr($constructor, 0, strlen($constructor) - 1) . ')'; //delete the last "," and add ")"
+                eval("\$obj = $constructor;"); //evalue the constructor
+                $arrayObjects[] = $obj;
+            }
+        }
 
-		if(!empty($clauses)){
-			foreach($clauses as $key => $value) {
-				$clauses2Sql[] = "`$key`=$value";
-			}
-			$query .= " WHERE ".implode(' AND ',array_values($clauses2Sql))."";
-		}
-		if(!empty($orderBy)){
-			$query .= " ORDER BY ".$orderBy;
-		}
-		return self::query($query);
-	}
+        return $arrayObjects;
+    }
 
-	/***********************************************************
-	 * UPDATE SOME FIELDS/RECORDS FROM A TABLE DESIGNATED BY THE CONDITION
-	 ***********************************************************/
-	function update($table,$fields,$conditions = array(),$debug=false) {
-		if (!is_array($fields) || count($fields)==0) {return false;} // no field to modify
+    /**
+     * Get all fields of all records in one single non-associative array
+     * It's basically all values available concatened in a single array
+     * @param mysqli_result $result
+     * @return array empty array if no result
+     */
+    public function getRowArrays(mysqli_result $result = null)
+    {
+        $arrayFromResultSet = array();
+        if ($result != null) {
+            while ($row = $result->fetch_row()) {
+                foreach ($row as $value) {
+                    $arrayFromResultSet[] = stripcslashes($value);
+                }
+            }
+        }
 
-		array_walk($fields,array($this,'addQuotes'));
-		array_walk($conditions,array($this,'addQuotes'));
+        return $arrayFromResultSet;
+    }
 
-		$query = "UPDATE `$table` SET ";
-		$params = array();
-		foreach($fields as $key => $value){
-			$params[] = "$key=$value";
-		}
-		$query .= implode(',',$params);
-			
-		foreach($conditions as $key => $value) {
-			$clauses[] = "$key=$value";
-		}
-		if(!empty($conditions))
-		$query .= ' WHERE '. implode(' AND ',$clauses);
-		if($debug)
-		echo $query;
-		return self::query($query);
-	}
+    /**
+     * Get one record as one associative array
+     * @param mysqli_result $result
+     * @return array empty array if no result
+     */
+    public function getAssocArray(mysqli_result $result = null)
+    {
+        $return = array();
+        if ($result != null) {
+            $return = $result->fetch_assoc();
+        }
 
-	protected function GestionErreur($testErreur, $msgErreur) {
-		if ($this->bdLink) {
-			$phpError = mysqli_error($this->bdLink);
-			$phpErrorNum = mysqli_errno($this->bdLink);
-		} else {
-			$phpError = mysqli_connect_error();
-			$phpErrorNum = mysqli_connect_errno();
-		}
-		if ($phpErrorNum != 0)
-		$msgPhpError = 'Error n°'.$phpErrorNum.': '.$phpError;
-		else
-		$msgPhpError = '';
-		if ($testErreur) {
-			die($msgErreur.'<br/>'.$msgPhpError);
-		}
-	}
+        return $return;
+    }
+
+    /**
+     * Get all records as an array of associative arrays
+     * @param mysqli_result $result
+     * @return array empty array if no result
+     */
+    public function getAssocArrays(mysqli_result $result = null)
+    {
+        $contentArray = array();
+        if ($result != null) {
+            while ($row = $result->fetch_assoc()) {
+                $contentArray[] = $row;
+            }
+        }
+
+        return $contentArray;
+    }
+
+    /**
+     * Insert a record from an associative array and returns the ID inserted
+     * @param string $table
+     * @param array $fields
+     * @return integer|false ID inserted or false in case of error
+     */
+    public function insert($table, array $fields)
+    {
+        // protect and quote every data to insert
+        array_walk($fields, array($this, 'addQuotes'));
+
+        $query = "INSERT INTO `$table` (" . implode(',', array_keys($fields)) . ") VALUES (" . implode(',', array_values($fields)) . ")";
+        $result = $this->query($query);
+
+        // retourne l'id de la nouvelle entrée ou false si une erreur s'est produite
+        if ($result) {
+            return $this->bdLink->insert_id;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Delete records from an associative array
+     * @param string $table
+     * @param array $clauses
+     * @return type
+     */
+    public function delete($table, array $clauses = array())
+    {
+        // protect and quote every data to insert
+        array_walk($clauses, array($this, 'addQuotes'));
+
+        $query = "DELETE FROM `$table`";
+        if (!empty($clauses)) {
+            foreach ($clauses as $key => $value) {
+                $clauses2Sql[] = "`$key`=$value";
+            }
+            $query .= " WHERE " . implode(' AND ', array_values($clauses2Sql)) . "";
+        }
+
+        return $this->query($query);
+    }
+
+    /**
+     * Select records from (joined) tables
+     * @param string|array $tables either a string used directly in SQL (custom joins possible) or an array of tables that will be joined
+     * @param string|array $clauses either a string used directly in SQL, or an associative array of field => value
+     * @param array $fields
+     * @param string $orderBy
+     * @return mysqli_result|false
+     */
+    public function select($tables, $clauses = null, array $fields = array('*'), $orderBy = null)
+    {
+        if (is_array($tables)) {
+            $tables = '`' . implode('`, `', $tables) . '`';
+        }
+
+        if (is_array($clauses)) {
+
+            // protect and quote every data to insert
+            array_walk($clauses, array($this, 'addQuotes'));
+
+            foreach ($clauses as $key => $value) {
+                $clauses2Sql[] = "`$key` = $value";
+            }
+            $clauses = implode(' AND ', $clauses2Sql);
+        }
+
+        $query = 'SELECT ' . implode(', ', $fields) . " FROM $tables";
+
+        if (!empty($clauses)) {
+            $query .= ' WHERE ' . $clauses;
+        }
+
+        if (!empty($orderBy)) {
+            $query .= ' ORDER BY ' . $orderBy;
+        }
+
+        return $this->query($query);
+    }
+
+    /**
+     * Update records from table
+     * @param string $table
+     * @param array $fields
+     * @param array $conditions
+     * @return boolean
+     */
+    public function update($table, array $fields, array $conditions = array())
+    {
+        if (!is_array($fields) || count($fields) == 0) {
+            return false;
+        } // no field to modify
+
+        array_walk($fields, array($this, 'addQuotes'));
+        array_walk($conditions, array($this, 'addQuotes'));
+
+        $query = "UPDATE `$table` SET ";
+        $params = array();
+        foreach ($fields as $key => $value) {
+            $params[] = "$key=$value";
+        }
+        $query .= implode(',', $params);
+
+        foreach ($conditions as $key => $value) {
+            $clauses[] = "$key=$value";
+        }
+
+        if (!empty($conditions)) {
+            $query .= ' WHERE ' . implode(' AND ', $clauses);
+        }
+
+        return $this->query($query);
+    }
+
+    /**
+     * If $isError evaluate to true, will die and print $errorMessage
+     * @param mixed $isError
+     * @param string $errorMessage
+     */
+    protected function gestionErreur($isError, $errorMessage)
+    {
+        if (!$isError) {
+            return;
+        }
+
+        // Gather error information
+        if ($this->bdLink) {
+            $phpError = mysqli_error($this->bdLink);
+            $phpErrorNum = mysqli_errno($this->bdLink);
+        } else {
+            $phpError = mysqli_connect_error();
+            $phpErrorNum = mysqli_connect_errno();
+        }
+        if ($phpErrorNum != 0) {
+            $msgPhpError = 'Error n°' . $phpErrorNum . ': ' . $phpError;
+        } else {
+            $msgPhpError = '';
+        }
+
+        // Die
+        die($errorMessage . '<br/>' . PHP_EOL . $msgPhpError . PHP_EOL);
+    }
+
+    /**
+     * @return string
+     */
+    public function getDatabaseName()
+    {
+        return $this->databaseName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPort()
+    {
+        return $this->port;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
+    /**
+     * @return string
+     */
+    public function getHostname()
+    {
+        return $this->hostname;
+    }
 }
-?>
