@@ -18,7 +18,7 @@ class migrator
      */
     private $dbNew = null;
 
-    private $usersMapping = array(
+      private $usersMapping = array(
             1 =>  1,
             7  =>  247,
         );
@@ -58,6 +58,8 @@ class migrator
     private $versionsMapping = array();
     private $journalsMapping = array();
     private $issuesMapping = array();
+    private $issuesParentsMapping = array();
+    private $issuesRelationsMapping = array();
     private $timeEntriesMapping = array();
     private $modulesMapping = array();
 
@@ -73,7 +75,7 @@ class migrator
 
     private $nbAt = 0;
 
-    public function __construct($host1, $db1, $user1, $pass1, $host2, $db2, $user2, $pass2)
+  public function __construct($host1, $db1, $user1, $pass1, $host2, $db2, $user2, $pass2)
     {
         $this->dbOld = new DBMysql($host1, $user1, $pass1);
         $this->dbOld->connect($db1);
@@ -567,6 +569,40 @@ class migrator
         }
     }
 
+        private function migrateIssuesParents($idProjectOld)
+    {
+        $result = $this->dbOld->select('issues', array('project_id' => $idProjectOld));
+        $issuesOld = $this->dbOld->getAssocArrays($result);
+        foreach ($issuesOld as $issueOld) {
+            $idIssueOld = $issueOld['id'];
+            if ($issueOld['parent_id'] > 0) {
+
+                // Update parents for issues
+                $issueUpdate['parent_id'] = $this->replaceIssue($issueOld['parent_id']);
+
+                $idParentIssueNew = $this->dbNew->update('issues', $issueUpdate, array('id' => $this->issuesMapping[$issueOld['id']]));
+                $this->issuesParentsMapping[$idIssueOld] = $idParentIssueNew;
+            } 
+        }
+    }
+
+        private function migrateIssueRelations($idIssueOld)
+    {
+        $result = $this->dbOld->select('issue_relations');
+        $relationsOld = $this->dbOld->getAssocArrays($result);
+        foreach ($relationsOld as $relation) {
+            $idRelationOld = $relation['id'];
+            unset($relation['id']);
+       
+            // Update fields for relations
+            $relation['issue_from_id'] = $this->replaceIssue($relation['issue_from_id']);
+            $relation['issue_to_id'] = $this->replaceIssue($relation['issue_to_id']);
+            
+            $idRelationNew = $this->dbNew->insert('issue_relations', $relation);
+            $this->issuesRelationsMapping[$idRelationOld] = $idRelationNew;
+        }
+    }
+
     public function migrateProject($idProjectOld)
     {
         $result = $this->dbOld->select('projects', array('id' => $idProjectOld));
@@ -576,10 +612,12 @@ class migrator
             unset($projectOld['id']);
             $idProjectNew = $this->dbNew->insert('projects', $projectOld);
             $this->projectsMapping[$idProjectOld] = $idProjectNew;
-            echo "migrating old redmine $idProjectOld => to new redmine $idProjectNew\n";
+            echo "migrating old redmine $idProjectOld => to new redmine $idProjectNew <br>\n";
             $this->migrateVersions($idProjectOld);
             $this->migrateCategories($idProjectOld);
             $this->migrateIssues($idProjectOld);
+            $this->migrateIssuesParents($idProjectOld);
+            $this->migrateIssueRelations($idProjectOld);
             $this->migrateNews($idProjectOld);
             $this->migrateDocuments($idProjectOld);
             $this->migrateBoards($idProjectOld);
@@ -592,6 +630,8 @@ class migrator
 
         echo 'projects: ' . count($this->projectsMapping) . " <br>\n";
         echo 'issues: ' . count($this->issuesMapping) . " <br>\n";
+        echo 'issue parents: ' . count($this->issuesParentsMapping) . " <br>\n";
+        echo 'issue relations: ' . count($this->issuesRelationsMapping) . " <br>\n";
         echo 'attachments: ' . $this->nbAt . " <br>\n";
         echo 'categories: ' . count($this->categoriesMapping) . " <br>\n";
         echo 'versions: ' . count($this->versionsMapping) . " <br>\n";
@@ -609,6 +649,7 @@ class migrator
         echo 'wiki content versions: ' . count($this->wikiContentVersionsMapping) . " <br>\n";
     }
 }
+
 
 $migrator = new migrator('localhost', 'redmine', 'root', '',
                             'localhost', 'redmine_new',   'root', '');
