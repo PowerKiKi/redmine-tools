@@ -18,7 +18,7 @@ class migrator
      */
     private $dbNew = null;
 
-      private $usersMapping = array(
+    private $usersMapping = array(
             1 =>  1,
             7  =>  247,
         );
@@ -75,7 +75,7 @@ class migrator
 
     private $nbAt = 0;
 
-  public function __construct($host1, $db1, $user1, $pass1, $host2, $db2, $user2, $pass2)
+    public function __construct($host1, $db1, $user1, $pass1, $host2, $db2, $user2, $pass2)
     {
         $this->dbOld = new DBMysql($host1, $user1, $pass1);
         $this->dbOld->connect($db1);
