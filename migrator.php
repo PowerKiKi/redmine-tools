@@ -650,7 +650,6 @@ class migrator
     }
 }
 
-
 $migrator = new migrator('localhost', 'redmine', 'root', '',
                             'localhost', 'redmine_new',   'root', '');
 $migrator->migrateProject(86);
