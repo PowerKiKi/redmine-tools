@@ -569,7 +569,7 @@ class migrator
         }
     }
 
-        private function migrateIssuesParents($idProjectOld)
+    private function migrateIssuesParents($idProjectOld)
     {
         $result = $this->dbOld->select('issues', array('project_id' => $idProjectOld));
         $issuesOld = $this->dbOld->getAssocArrays($result);
@@ -586,7 +586,7 @@ class migrator
         }
     }
 
-        private function migrateIssueRelations($idIssueOld)
+    private function migrateIssueRelations($idIssueOld)
     {
         $result = $this->dbOld->select('issue_relations');
         $relationsOld = $this->dbOld->getAssocArrays($result);
