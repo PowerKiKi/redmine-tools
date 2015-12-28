@@ -488,7 +488,7 @@ class migrator
 
     private function migrateWikiPageParents($idWikiOld)
     {
-        $result = $this->dbOld->query("SELECT * FROM wiki_pages" . " WHERE wiki_id =" . $idWikiOld . " and parent_id > 0");
+        $result = $this->dbOld->query("SELECT * FROM wiki_pages WHERE wiki_id =" . $idWikiOld . " and parent_id > 0");
         $wikipagesOld = $this->dbOld->getAssocArrays($result);
         foreach ($wikipagesOld as $wikipageOld) {
             $idWikiPageNew = $this->wikipagesMapping[$wikipageOld['id']];
@@ -498,7 +498,7 @@ class migrator
             $wikipageOld['wiki_id'] = $this->wikisMapping[$idWikiOld];
             $wikipageOld['parent_id'] = $this->wikipagesMapping[$wikipageOld['parent_id']];
 
-            $idWikiPageNew = $this->dbNew->update('wiki_pages', $wikipageOld, array('id' => idWikiPageNew));
+            $idWikiPageNew = $this->dbNew->update('wiki_pages', $wikipageOld, array('id' => $idWikiPageNew));
         }
     }
 
@@ -520,7 +520,7 @@ class migrator
             $this->migrateWikiContents($idWikiPageOld);
         }
 
-        $this->migrateWikiPageParents($idWikiPageOld);
+        $this->migrateWikiPageParents($idWikiOld);
     }
 
     private function migrateWikis($idProjectOld)
