@@ -266,6 +266,29 @@ class migrator
 
             // Update fields
             $journalDetail['journal_id'] = $this->journalsMapping[$idJournalOld];
+            
+          // Update fields
+            $journalDetail['journal_id'] = $this->journalsMapping[$idJournalOld];
+            if (in_array($journalDetail['prop_key'], array('parent_id', 'label_relates_to', 'label_copied_to', 'label_copied_from'))) {
+                $journalDetail['old_value'] = $this->issuesMapping[$journalDetail['old_value']];
+                $journalDetail['value'] = $this->issuesMapping[$journalDetail['value']];
+            }
+            if ($journalDetail['prop_key'] == 'assigned_to_id') {
+                $journalDetail['old_value'] = $this->usersMapping[$journalDetail['old_value']];
+                $journalDetail['value'] = $this->usersMapping[$journalDetail['value']];
+            }
+            if ($journalDetail['prop_key'] == 'tracker_id') {
+                $journalDetail['old_value'] = $this->trackersMapping[$journalDetail['old_value']];
+                $journalDetail['value'] = $this->trackersMapping[$journalDetail['value']];
+            }
+            if ($journalDetail['prop_key'] == 'status_id') {
+                $journalDetail['old_value'] = $this->statusMapping[$journalDetail['old_value']];
+                $journalDetail['value'] = $this->statusMapping[$journalDetail['value']];
+            }
+            if ($journalDetail['prop_key'] == 'priority_id') {
+                $journalDetail['old_value'] = $this->prioritiesMapping[$journalDetail['old_value']];
+                $journalDetail['value'] = $this->prioritiesMapping[$journalDetail['value']];
+            }
 
             $this->dbNew->insert('journal_details', $journalDetail);
         }
@@ -488,7 +511,7 @@ class migrator
 
     private function migrateWikiPageParents($idWikiOld)
     {
-        $result = $this->dbOld->query("SELECT * FROM wiki_pages" . " WHERE wiki_id =" . $idWikiOld . " and parent_id > 0");
+        $result = $this->dbOld->query("SELECT * FROM wiki_pages WHERE wiki_id =" . $idWikiOld . " and parent_id > 0");
         $wikipagesOld = $this->dbOld->getAssocArrays($result);
         foreach ($wikipagesOld as $wikipageOld) {
             $idWikiPageNew = $this->wikipagesMapping[$wikipageOld['id']];
@@ -498,7 +521,7 @@ class migrator
             $wikipageOld['wiki_id'] = $this->wikisMapping[$idWikiOld];
             $wikipageOld['parent_id'] = $this->wikipagesMapping[$wikipageOld['parent_id']];
 
-            $idWikiPageNew = $this->dbNew->update('wiki_pages', $wikipageOld, array('id' => idWikiPageNew));
+            $idWikiPageNew = $this->dbNew->update('wiki_pages', $wikipageOld, array('id' => $idWikiPageNew));
         }
     }
 
@@ -520,7 +543,7 @@ class migrator
             $this->migrateWikiContents($idWikiPageOld);
         }
 
-        $this->migrateWikiPageParents($idWikiPageOld);
+        $this->migrateWikiPageParents($idWikiOld);
     }
 
     private function migrateWikis($idProjectOld)
@@ -565,7 +588,9 @@ class migrator
             $idIssueNew = $this->dbNew->insert('issues', $issueOld);
             $this->issuesMapping[$idIssueOld] = $idIssueNew;
 
-            $this->migrateJournals($idIssueOld);
+            foreach ($issuesOld as $issueOld) {
+                $this->migrateJournals($issueOld['id']);
+            }
         }
     }
 
