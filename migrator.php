@@ -52,7 +52,6 @@ class migrator
             3 => 3,
             4 => 4,
     );
-
     private $projectsMapping = array();
     private $categoriesMapping = array();
     private $versionsMapping = array();
@@ -588,9 +587,7 @@ class migrator
             $idIssueNew = $this->dbNew->insert('issues', $issueOld);
             $this->issuesMapping[$idIssueOld] = $idIssueNew;
 
-            foreach ($issuesOld as $issueOld) {
-                $this->migrateJournals($issueOld['id']);
-            }
+            $this->migrateJournals($idIssueOld);
         }
     }
 
@@ -677,4 +674,5 @@ class migrator
 
 $migrator = new migrator('localhost', 'redmine', 'root', '',
                             'localhost', 'redmine_new',   'root', '');
+
 $migrator->migrateProject(86);
