@@ -52,6 +52,7 @@ class migrator
             3 => 3,
             4 => 4,
     );
+
     private $projectsMapping = array();
     private $categoriesMapping = array();
     private $versionsMapping = array();
